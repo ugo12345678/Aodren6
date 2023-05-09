@@ -37,11 +37,10 @@
 
         <div v-if="selectedValue == 'prise'" class="form-row" id="cause-row">
           <label for="cause">Cause :</label>
-          <select id="cause" v-model="selectedCause">
+          <select id="cause" v-model="selectedCause" required>
             <option v-for="cause in causes" :value="cause.nom" :key="cause.id">{{ cause.nom }}</option>
           </select>
         </div>
-
 
         <div class="form-row">
           <label for="date">Date:</label>
@@ -50,21 +49,21 @@
 
         <div class="form-row" id="pole-row">
           <label for="pole">Pôle :</label>
-          <select id="pole" v-model="selectedPole">
+          <select id="pole" v-model="selectedPole" required>
             <option v-for="pole in poles" :value="pole.nom" :key="pole.id">{{ pole.nom }}</option>
           </select>
         </div>
 
         <div class="form-row" id="produit-row">
           <label for="produit">Produit:</label>
-          <select id="produit" v-model="selectedProduit2" @change="fetchTableauData2">
+          <select id="produit" v-model="selectedProduit2" @change="fetchTableauData2" required>
             <option v-for="produit in produits" :value="produit.id" :key="produit.id">{{ produit.nom }}</option>
           </select>
         </div>
 
         <div class="form-row" id="piece-row">
           <label for="piece">Piece:</label>
-          <select id="piece" v-model="selectedPiece">
+          <select id="piece" v-model="selectedPiece" required>
             <option v-for="piece in tableauData2" :value="piece.id" :key="piece.id">{{ piece.nom }}</option>
           </select>
         </div>
@@ -101,11 +100,11 @@ export default {
   },
   data() {
     return {
-      date: undefined,
+      date: new Date().toISOString().split('T')[0],
       quantiteSelected: undefined,
       selectedProduit: '',
       selectedPiece: undefined,
-      selectedValue: 'mise',
+      selectedValue: null,
       selectedPole: '',
       selectedCause: '',
       selectedProduit2: '',
@@ -118,6 +117,7 @@ export default {
   },
   methods: {
     async fetchTableauData() {
+      console.log(this.selectedProduit)
       try {
         const response = await fetch(`http://localhost:5000/getproduit/${this.selectedProduit}`);
         if (response.ok) {
@@ -136,7 +136,6 @@ export default {
         if (response.ok) {
           const data = await response.json();
           this.tableauData2 = data;
-          console.log(this.tableauData2);
         } else {
           throw new Error('Erreur lors de la requête HTTP');
         }
@@ -144,24 +143,28 @@ export default {
         console.error(error);
       }
     },
-    async Submit() {
-      alert(this.selectedValue)
-        if(this.selectedValue == "mise")
-        {
-            await this.AddMise()
-        }
-        else if (this.selectedValue == "prise")
-        {
-            await this.AddPrise()
-        }
-        else
-        {
-          console.log("ERROR")
-        }
-        
+    async Submit(event) {
+
+      event.preventDefault();
+
+      if (this.selectedValue == "mise") {
+        await this.AddMise()
+      }
+      else if (this.selectedValue == "prise") {
+        await this.AddPrise()
+      }
+      else {
+        console.log("ERROR")
+      }
+      this.selectedCause = null;
+      this.selectedPiece = null;
+      this.selectedPole = null;
+      this.selectedProduit2 = null;
+      this.selectedValue = null;
+      this.fetchTableauData();
     },
     async AddMise() {
-      
+
       fetch('http://localhost:5000/addmise', {
         method: 'POST',
         headers: {
@@ -174,7 +177,6 @@ export default {
           quantite: this.quantiteSelected,
         }),
       })
-
     },
     async AddPrise() {
       fetch('http://localhost:5000/addprise', {
@@ -185,16 +187,13 @@ export default {
         body: JSON.stringify({
           date: this.date,
           pole: this.selectedPole,
-          cause : this.selectedCause,
+          cause: this.selectedCause,
           id_piece: this.selectedPiece,
           quantite: this.quantiteSelected,
         }),
       })
-
-    }
+    },
   },
-
-
 }
 
 </script>
